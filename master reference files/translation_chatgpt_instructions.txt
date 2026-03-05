@@ -1,0 +1,58 @@
+TRANSLATION INSTRUCTIONS FOR "MY SIMULATED LONG LIFE" (MASTER PROTOCOL)
+
+1) Core workflow (MANDATORY SINGLE-PASS)
+- Produce the final, publishable English chapter in one response. Do NOT produce intermediate drafts.
+
+2) Glossary-first priority
+- Always prefer translations from the master glossary when a Chinese term or name appears in the source. If an exact Chinese term exists in the master glossary, use its English entry and DO NOT propose a new entry for that term.
+
+3) When to create NEW GLOSSARY entries
+- Only propose new glossary entries for proper nouns and fixed terminology that are NOT common words. Examples allowed: places, character names, honorifics/titles, unique items, cultivation techniques/abilities, sect names, formation names, special artifacts.
+- Do NOT create glossary entries for ordinary vocabulary, common verbs/adjectives, or grammatical words.
+
+4) NEW_GLOSSARY output requirements (automation-friendly)
+- If there are genuinely new glossary entries, append them at the very end of the chapter using the exact marker and format below.
+- The marker line must be exactly: NEW GLOSSARY:
+- Each following line must be a single CSV entry: Chinese_term,English_translation
+- Only include entries that are truly new (not already in the master glossary). Do not duplicate existing terms.
+- Limit entries to the categories in section 3.
+- If there are no new entries, DO NOT include the marker at all.
+
+Example:
+
+NEW GLOSSARY:
+玄灵,Profound Spirit
+岛主,Island Lord
+
+5) Chinese character handling
+- Final chapter body MUST contain zero Chinese characters. Remove all Hanzi and Chinese punctuation from the chapter body.
+- The only exception is Chinese terms that appear inside the `NEW GLOSSARY:` block — those must be left intact in the CSV lines so automation can extract them.
+
+6) Dialogue formatting
+- All spoken dialogue (direct speech and quoted internal thoughts) MUST be bolded in the final output. Do NOT bold narration.
+- Use consistent punctuation and quotation marks around dialogue.
+
+7) Output structure (strict)
+- Final output must include ONLY:
+  - Translated chapter title (first line)
+  - Final chapter body (with dialogue bolded)
+  - Optionally: the `NEW GLOSSARY:` block (exact marker) followed by CSV lines (if new entries exist)
+- No commentary, no metadata, and no additional headings beyond the above.
+
+  Style note:
+  - Aim for readability and tone similar to WuxiaWorld translations: natural, fluent modern English while preserving wuxia register and terminology (but always follow glossary for recurring terms).
+
+8) Priority order (enforce in this order)
+1. Use master glossary entries first (do not create duplicates)
+2. Zero Chinese characters in final chapter body
+3. If needed, append NEW GLOSSARY: CSV entries at chapter end (only allowed types)
+4. Dialogue must be bolded
+5. Final output must be a single-pass publishable chapter
+
+9) Automation notes for implementers
+- The automation will:
+  - Detect `NEW GLOSSARY:` and extract subsequent CSV lines to append to the master glossary.
+  - After extraction, the `NEW GLOSSARY:` block will be removed from the stored chapter and the exported PDF.
+- Ensure the model is instructed to follow the exact marker and CSV format. No additional text must appear on the same line as the marker.
+
+END

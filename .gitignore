@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Exe workspace (created next to exe)
+WuxiaTranslatorFiles/
+
+# Local workspace/output when running from source
+compiled_books/
+compiled_pdf/
+debug_chapters/
+input_box/
+raw_chapters/
+translated_chapter/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Build artifacts
+build/
+dist/
+*.spec
+!WuxiaTranslator.spec
+
+# Logs
+*.log
+*.log.*
+translator.log*

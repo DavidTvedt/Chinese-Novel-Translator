@@ -1,0 +1,333 @@
+PROJECT: My Simulated Long Life Translator Pipeline (Single-Pass + Glossary + PDF + Queue)
+
+OBJECTIVE
+
+Build a local Python application that translates Chinese webnovel chapters using OpenAI API while strictly following the master translation protocol and glossary.
+
+The system must:
+
+- Use mandatory single-pass translation
+- Preserve bold dialogue
+- Maintain glossary consistency
+- Save chapters as XHTML source-of-truth files
+- Rebuild PDF deterministically
+- Support automatic queue processing via `input_box/*.txt`
+
+The system must never lose source data.
+
+------------------------------------------------------------
+EXISTING FOLDER STRUCTURE (DO NOT CHANGE)
+
+compiled_books/
+debug_chapters/
+master reference files/
+    master_glossary.txt
+    translation_chatgpt_instructions.txt
+
+raw_chapters/
+    queue/
+    processed/
+    failed/
+
+input_box/
+
+translated_chapter/
+
+.env
+instructions.txt
+
+------------------------------------------------------------
+MASTER AUTHORITY FILES
+
+These files MUST be loaded every translation run:
+
+master reference files/master_glossary.txt
+master reference files/translation_chatgpt_instructions.txt
+
+translation_chatgpt_instructions.txt defines:
+
+- mandatory two-pass translation
+- bold dialogue requirement
+- glossary authority
+- output structure
+
+It must be injected fully into OpenAI prompt.
+
+master_glossary.txt defines glossary authority.
+
+------------------------------------------------------------
+GLOSSARY FORMAT (CRITICAL)
+
+Glossary file format must remain EXACTLY:
+
+Chinese,English
+
+One entry per line.
+
+Example:
+
+Chinese,English
+炼气期,Qi Refining
+筑基境界,Foundation Establishment
+李凡,Li Fan
+
+Requirements:
+
+- CSV format only
+- one entry per line
+- newline-separated
+- header row must remain intact
+- append new entries at end
+- do NOT duplicate existing Chinese terms
+- dedupe based on exact Chinese string match
+
+------------------------------------------------------------
+QUEUE SYSTEM (PRIMARY INPUT METHOD)
+
+User workflow:
+
+User drops raw chapter text into:
+
+input_box/*.txt
+
+Program snapshots content into queue files:
+
+raw_chapters/queue/YYYYMMDD_HHMMSS__HASH__ORIGNAME.txt
+
+Queue files are durable input records.
+
+Queue processing must be sequential.
+
+After successful translation, move queue file to:
+
+raw_chapters/processed/
+
+If failure, move queue file to:
+
+raw_chapters/failed/
+
+Never delete queue files automatically.
+
+Implement deduplication:
+
+If a chapter file's content hash matches most recent queued content, do NOT enqueue again.
+
+------------------------------------------------------------
+TRANSLATION PIPELINE
+
+For each queue file:
+
+STEP 1 — CLEAN INPUT
+
+Remove webpage junk such as:
+
+- URLs
+- Qidian UI elements
+- navigation elements
+- ratings, comments, metadata
+
+Keep only:
+
+- chapter title
+- chapter body text
+
+STEP 2 — LOAD MASTER FILES
+
+Load full contents of:
+
+master reference files/master_glossary.txt
+master reference files/translation_chatgpt_instructions.txt
+
+STEP 3 — FIRST PASS TRANSLATION
+
+Call OpenAI API.
+
+Inject:
+
+- master instruction file
+- glossary file
+- cleaned chapter text
+
+Receive pass1 translation.
+
+Save to:
+
+debug_chapters/chapter_XXXX_pass1.txt
+
+STEP 4 — SECOND PASS TRANSLATION (FINAL)
+
+Send pass1 translation to OpenAI.
+
+Receive pass2 translation.
+
+Pass2 is the ONLY valid final translation.
+
+Save pass2 to:
+
+debug_chapters/chapter_XXXX_pass2.txt
+
+and to:
+
+translated_chapter/chapter_XXXX.xhtml
+
+This XHTML file is the permanent source-of-truth.
+
+------------------------------------------------------------
+CHAPTER NUMBERING
+
+Auto-detect next chapter number from:
+
+translated_chapter/
+
+Find highest existing chapter_XXXX.xhtml
+
+Next chapter = max + 1
+
+Use zero-padded 4-digit numbering.
+
+Example:
+
+chapter_0001.xhtml
+chapter_0002.xhtml
+chapter_0003.xhtml
+
+------------------------------------------------------------
+GLOSSARY UPDATE BEHAVIOR
+
+If OpenAI returns new glossary entries:
+
+Append them to:
+
+master reference files/master_glossary.txt
+
+Format MUST be:
+
+Chinese,English
+
+One entry per line.
+
+Append only.
+
+Never modify existing entries.
+
+Never duplicate Chinese terms.
+
+Header row must remain first line.
+
+------------------------------------------------------------
+PDF BUILD SYSTEM
+
+Use WeasyPrint.
+
+Rebuild PDF from scratch every time.
+
+Input:
+
+translated_chapter/*.xhtml
+
+Output:
+
+compiled_books/my_simulated_long_life.pdf
+compiled_books/my_simulated_long_life.epub
+
+Requirements:
+
+- proper TOC navigation
+- correct chapter ordering
+- chapter title headings
+- bold dialogue preserved
+- deterministic rebuild
+
+Never modify the PDF in place.
+
+Always rebuild from chapter files.
+
+------------------------------------------------------------
+COMMAND LINE INTERFACE
+
+Create translator.py with argparse.
+
+Must support:
+
+TRANSLATE MODE:
+
+python translator.py translate
+
+Behavior:
+
+- move all `input_box/*.txt` into the queue
+- process the queue sequentially
+- move processed files appropriately
+- rebuild the PDF automatically
+
+BUILD ONLY MODE:
+
+python translator.py build
+
+Behavior:
+
+- rebuild PDF only
+- do NOT call OpenAI
+
+------------------------------------------------------------
+TECH STACK REQUIREMENTS
+
+Python 3.x
+
+Required packages:
+
+openai
+python-dotenv
+weasyprint
+
+Load API key from:
+
+.env
+
+Use modern OpenAI Python SDK syntax.
+
+------------------------------------------------------------
+LOGGING
+
+Create translator.log in root.
+
+Log:
+
+- queue events
+- translation start/finish
+- glossary updates
+- PDF builds
+- errors
+
+------------------------------------------------------------
+ERROR HANDLING
+
+Auto-create missing folders.
+
+Handle:
+
+- empty input files
+- missing glossary
+- OpenAI failures
+- malformed inputs
+
+Never crash permanently.
+
+Continue processing next queue item.
+
+------------------------------------------------------------
+FINAL OUTPUT FILES
+
+translator.py
+
+translated_chapter/chapter_XXXX.xhtml
+
+compiled_books/my_simulated_long_life.pdf
+compiled_books/my_simulated_long_life.epub
+
+debug_chapters/chapter_XXXX_pass1.txt
+debug_chapters/chapter_XXXX_pass2.txt
+
+updated master reference files/master_glossary.txt
+
+Build complete working system.
